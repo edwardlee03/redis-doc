@@ -1,3 +1,4 @@
+ASYNC
 ACLs
 AMD
 AOF
@@ -95,6 +96,7 @@ RDDs
 REDISPORT
 REdis
 REmote
+Reddit's
 RSS
 RTT
 Redis
@@ -144,9 +146,11 @@ addr
 afterwards
 allkeys
 allocator
+analytics
 antirez
 aof
 appendfsync
+appendonly
 arity
 atomicity
 auth
@@ -156,6 +160,7 @@ backtrace
 benchmarked
 benchmarking
 bgsave
+bitfield
 bitop
 bitwise
 blazingly
@@ -171,6 +176,7 @@ checksum
 chrt
 cli
 cmsgpack
+codename
 commandstats
 conf
 config
@@ -359,9 +365,11 @@ trib
 tuple
 tuples
 unary
+underflows
 unencrypted
 unguessable
 unix
+unlinks
 unordered
 unreachability
 unsubscribe
