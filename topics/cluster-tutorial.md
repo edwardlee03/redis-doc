@@ -2,8 +2,8 @@ Redis cluster tutorial
 ===
 
 This document is a gentle introduction to Redis Cluster, that does not use
-complex to understand distributed systems concepts. It provides instructions
-about how to setup a cluster, test, and operate it, without
+difficult to understand concepts of distributed systems . It provides
+instructions about how to setup a cluster, test, and operate it, without
 going into the details that are covered in
 the [Redis Cluster specification](/topics/cluster-spec) but just describing
 how the system behaves from the point of view of the user.
@@ -155,7 +155,7 @@ happens:
 * The master B replies OK to your client.
 * The master B propagates the write to its slaves B1, B2 and B3.
 
-As you can see B does not wait for an acknowledge from B1, B2, B3 before
+As you can see, B does not wait for an acknowledgement from B1, B2, B3 before
 replying to the client, since this would be a prohibitive latency penalty
 for Redis, so if your client writes something, B acknowledges the write,
 but crashes before being able to send the write to its slaves, one of the
@@ -218,12 +218,14 @@ let's introduce the configuration parameters that Redis Cluster introduces
 in the `redis.conf` file. Some will be obvious, others will be more clear
 as you continue reading.
 
-* **cluster-enabled `<yes/no>`**: If yes enables Redis Cluster support in a specific Redis instance. Otherwise the instance starts as a stand alone instance as usual.
-* **cluster-config-file `<filename>`**: Note that despite the name of this option, this is not an user editable configuration file, but the file where a Redis Cluster node automatically persists the cluster configuration (the state, basically) every time there is a change, in order to be able to re-read it at startup. The file lists things like the other nodes in the cluster, their state, persistent variables, and so forth. Often this file is rewritten and flushed on disk as a result of some message reception.
+* **cluster-enabled `<yes/no>`**: If yes, enables Redis Cluster support in a specific Redis instance. Otherwise the instance starts as a stand alone instance as usual.
+* **cluster-config-file `<filename>`**: Note that despite the name of this option, this is not a user editable configuration file, but the file where a Redis Cluster node automatically persists the cluster configuration (the state, basically) every time there is a change, in order to be able to re-read it at startup. The file lists things like the other nodes in the cluster, their state, persistent variables, and so forth. Often this file is rewritten and flushed on disk as a result of some message reception.
 * **cluster-node-timeout `<milliseconds>`**: The maximum amount of time a Redis Cluster node can be unavailable, without it being considered as failing. If a master node is not reachable for more than the specified amount of time, it will be failed over by its slaves. This parameter controls other important things in Redis Cluster. Notably, every node that can't reach the majority of master nodes for the specified amount of time, will stop accepting queries.
 * **cluster-slave-validity-factor `<factor>`**: If set to zero, a slave will always try to failover a master, regardless of the amount of time the link between the master and the slave remained disconnected. If the value is positive, a maximum disconnection time is calculated as the *node timeout* value multiplied by the factor provided with this option, and if the node is a slave, it will not try to start a failover if the master link was disconnected for more than the specified amount of time. For example if the node timeout is set to 5 seconds, and the validity factor is set to 10, a slave disconnected from the master for more than 50 seconds will not try to failover its master. Note that any value different than zero may result in Redis Cluster to be unavailable after a master failure if there is no slave able to failover it. In that case the cluster will return back available only when the original master rejoins the cluster.
 * **cluster-migration-barrier `<count>`**: Minimum number of slaves a master will remain connected with, for another slave to migrate to a master which is no longer covered by any slave. See the appropriate section about replica migration in this tutorial for more information.
 * **cluster-require-full-coverage `<yes/no>`**: If this is set to yes, as it is by default, the cluster stops accepting writes if some percentage of the key space is not covered by any node. If the option is set to no, the cluster will still serve queries even if only requests about a subset of keys can be processed.
+* **cluster-allow-reads-when-down `<yes/no>`**: If this is set to no, as it is by default, a node in a Redis Cluster will stop serving all traffic when the cluster is marked as fail, either when a node can't reach a quorum of masters or full coverage is not met. This prevents reading potentially inconsistent data from a node that is unaware of changes in the cluster. This option can be set to yes to allow reads from a node during the fail state, which is useful for applications that want to prioritize read availability but still want to prevent inconsistent writes. It can also be used for when using Redis Cluster with only one or two shards, as it allows the nodes to continue serving writes when a master fails but automatic failover is impossible. 
+
 
 Creating and using a Redis Cluster
 ===
@@ -379,7 +381,8 @@ I'm aware of the following implementations:
 * [StackExchange.Redis](https://github.com/StackExchange/StackExchange.Redis) offers support for C# (and should work fine with most .NET languages; VB, F#, etc)
 * [thunk-redis](https://github.com/thunks/thunk-redis) offers support for Node.js and io.js, it is a thunk/promise-based redis client with pipelining and cluster.
 * [redis-go-cluster](https://github.com/chasex/redis-go-cluster) is an implementation of Redis Cluster for the Go language using the [Redigo library client](https://github.com/garyburd/redigo) as the base client. Implements MGET/MSET via result aggregation.
-* The `redis-cli` utility in the unstable branch of the Redis repository at GitHub implements a very basic cluster support when started with the `-c` switch.
+* [ioredis](https://github.com/luin/ioredis) is a popular Node.js client, providing a robust support for Redis Cluster.
+* The `redis-cli` utility implements basic cluster support when started with the `-c` switch.
 
 An easy way to test Redis Cluster is either to try any of the above clients
 or simply the `redis-cli` command line utility. The following is an example
@@ -603,7 +606,7 @@ All the slots will be covered as usual, but this time the master at
 Scripting a resharding operation
 ---
 
-Reshardings can be performed automatically without the need to manually
+Resharding can be performed automatically without the need to manually
 enter the parameters in an interactive way. This is possible using a command
 line like the following:
 
@@ -690,7 +693,7 @@ In order to trigger the failover, the simplest thing we can do (that is also
 the semantically simplest failure that can occur in a distributed system)
 is to crash a single process, in our case a single master.
 
-We can identify a cluster and crash it with the following command:
+We can identify a master and crash it with the following command:
 
 ```
 $ redis-cli -p 7000 cluster nodes | grep master
@@ -946,7 +949,7 @@ resistant to failures as the number of replicas attached to a given master.
 For example a cluster where every master has a single replica can't continue
 operations if the master and its replica fail at the same time, simply because
 there is no other instance to have a copy of the hash slots the master was
-serving. However while netsplits are likely to isolate a number of nodes
+serving. However while net-splits are likely to isolate a number of nodes
 at the same time, many other kind of failures, like hardware or software failures
 local to a single node, are a very notable class of failures that are unlikely
 to happen at the same time, so it is possible that in your cluster where

@@ -138,7 +138,7 @@ retrieve elements by radius.
 Limits of the score
 ---
 
-Sorted set elements scores are double precision integers. It means that
+Sorted set elements scores are double precision floats. It means that
 they can represent different decimal or integer values with different
 errors, because they use an exponential representation internally.
 However what is interesting for indexing purposes is that the score is
@@ -348,7 +348,7 @@ we just store the entry as `key:value`:
 
 And search for the key with:
 
-    ZRANGEBYLEX myindex mykey: + LIMIT 1 1
+    ZRANGEBYLEX myindex [mykey: + LIMIT 1 1
     1) "mykey:myvalue"
 
 Then we extract the part after the colon to retrieve the value.
@@ -470,7 +470,7 @@ Representing and querying graphs using an hexastore
 
 One cool thing about composite indexes is that they are handy in order
 to represent graphs, using a data structure which is called
-[Hexastore](http://www.vldb.org/pvldb/1/1453965.pdf).
+[Hexastore](http://www.vldb.org/pvldb/vol1/1453965.pdf).
 
 The hexastore provides a representation for relations between objects,
 formed by a *subject*, a *predicate* and an *object*.
@@ -719,7 +719,7 @@ property or not.
 
 Similarly lists can be used in order to index items into a fixed order.
 I can add all my items into a Redis list and rotate the list with
-RPOPLPUSH using the same key name as source and destination. This is useful
+`RPOPLPUSH` using the same key name as source and destination. This is useful
 when I want to process a given set of items again and again forever in the
 same order. Think of an RSS feed system that needs to refresh the local copy
 periodically.

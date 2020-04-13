@@ -6,10 +6,10 @@ Redis Keyspace Notifications
 Feature overview
 ---
 
-Keyspace notifications allows clients to subscribe to Pub/Sub channels in order
+Keyspace notifications allow clients to subscribe to Pub/Sub channels in order
 to receive events affecting the Redis data set in some way.
 
-Examples of the events that is possible to receive are the following:
+Examples of the events that are possible to receive are the following:
 
 * All the commands affecting a given key.
 * All the keys receiving an LPUSH operation.
@@ -31,7 +31,7 @@ Pub/Sub messages to perform operations like pushing the events into a list.
 Type of events
 ---
 
-Keyspace notifications are implemented sending two distinct type of events
+Keyspace notifications are implemented by sending two distinct types of events
 for every operation affecting the Redis data space. For instance a `DEL`
 operation targeting the key named `mykey` in database `0` will trigger
 the delivering of two messages, exactly equivalent to the following two
@@ -40,7 +40,7 @@ the delivering of two messages, exactly equivalent to the following two
     PUBLISH __keyspace@0__:mykey del
     PUBLISH __keyevent@0__:del mykey
 
-It is easy to see how one channel allows to listen to all the events targeting
+It is easy to see how one channel allows us to listen to all the events targeting
 the key `mykey` and the other channel allows to obtain information about
 all the keys that are target of a `del` operation.
 
@@ -60,7 +60,7 @@ just the subset of events we are interested in.
 Configuration
 ---
 
-By default keyspace events notifications are disabled because while not
+By default keyspace event notifications are disabled because while not
 very sensible the feature uses some CPU power. Notifications are enabled
 using the `notify-keyspace-events` of redis.conf or via the **CONFIG SET**.
 
@@ -77,9 +77,10 @@ following table:
     s     Set commands
     h     Hash commands
     z     Sorted set commands
+    t     Stream commands
     x     Expired events (events generated every time a key expires)
     e     Evicted events (events generated when a key is evicted for maxmemory)
-    A     Alias for g$lshzxe, so that the "AKE" string means all the events.
+    A     Alias for g$lshztxe, so that the "AKE" string means all the events.
 
 At least `K` or `E` should be present in the string, otherwise no event
 will be delivered regardless of the rest of the string.
@@ -96,10 +97,13 @@ Different commands generate different kind of events according to the following 
 
 * `DEL` generates a `del` event for every deleted key.
 * `RENAME` generates two events, a `rename_from` event for the source key, and a `rename_to` event for the destination key.
+* `MOVE` generates two events, a `move_from` event for the source key, and a `move_to` event for the destination key.
+* `MIGRATE` generates a `del` event if the source key is removed.
+* `RESTORE` generates a `restore` event for the key.
 * `EXPIRE` generates an `expire` event when an expire is set to the key, or an `expired` event every time a positive timeout set on a key results into the key being deleted (see `EXPIRE` documentation for more info).
 * `SORT` generates a `sortstore` event when `STORE` is used to set a new key. If the resulting list is empty, and the `STORE` option is used, and there was already an existing key with that name, the result is that the key is deleted, so a `del` event is generated in this condition.
 * `SET` and all its variants (`SETEX`, `SETNX`,`GETSET`) generate `set` events. However `SETEX` will also generate an `expire` events.
-* `MSET` generates a separated `set` event for every key.
+* `MSET` generates a separate `set` event for every key.
 * `SETRANGE` generates a `setrange` event.
 * `INCR`, `DECR`, `INCRBY`, `DECRBY` commands all generate `incrby` events.
 * `INCRBYFLOAT` generates an `incrbyfloat` events.
@@ -121,13 +125,21 @@ Different commands generate different kind of events according to the following 
 * `SREM` generates a single `srem` event, and an additional `del` event if the resulting set is empty and the key is removed.
 * `SMOVE` generates an `srem` event for the source key, and an `sadd` event for the destination key.
 * `SPOP` generates an `spop` event, and an additional `del` event if the resulting set is empty and the key is removed.
-* `SINTERSTORE`, `SUNIONSTORE`, `SDIFFSTORE` generate `sinterstore`, `sunionostore`, `sdiffstore` events respectively. In the special case the resulting set is empty, and the key where the result is stored already exists, a `del` event is generated since the key is removed.
+* `SINTERSTORE`, `SUNIONSTORE`, `SDIFFSTORE` generate `sinterstore`, `sunionstore`, `sdiffstore` events respectively. In the special case the resulting set is empty, and the key where the result is stored already exists, a `del` event is generated since the key is removed.
 * `ZINCR` generates a `zincr` event.
 * `ZADD` generates a single `zadd` event even when multiple elements are added.
 * `ZREM` generates a single `zrem` event even when multiple elements are deleted. When the resulting sorted set is empty and the key is generated, an additional `del` event is generated.
 * `ZREMBYSCORE` generates a single `zrembyscore` event. When the resulting sorted set is empty and the key is generated, an additional `del` event is generated.
 * `ZREMBYRANK` generates a single `zrembyrank` event. When the resulting sorted set is empty and the key is generated, an additional `del` event is generated.
 * `ZINTERSTORE` and `ZUNIONSTORE` respectively generate `zinterstore` and `zunionstore` events. In the special case the resulting sorted set is empty, and the key where the result is stored already exists, a `del` event is generated since the key is removed.
+* `XADD` generates an `xadd` event, possibly followed an `xtrim` event when used with the `MAXLEN` subcommand.
+* `XDEL` generates a single `xdel` event even when multiple entries are are deleted.
+* `XGROUP CREATE` generates an `xgroup-create` event.
+* `XGROUP DELCONSUMER` generates an `xgroup-delconsumer` event.
+* `XGROUP DESTROY` generates an `xgroup-destroy` event.
+* `XGROUP SETID` generates an `xgroup-setid` event.
+* `XSETID` generates an `xsetid` event.
+* `XTRIM` generates an `xtrim` event.
 * Every time a key with a time to live associated is removed from the data set because it expired, an `expired` event is generated.
 * Every time a key is evicted from the data set in order to free memory as a result of the `maxmemory` policy, an `evicted` event is generated.
 
